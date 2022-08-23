@@ -1,16 +1,19 @@
-CC = clang
+CC = cc
 
-PNAME = c
+PNAME = cnum
 
 SRC  = $(shell find src -name "*.c")
 OBJ  = $(SRC:.c=.o)
 BIN = build
 
+INSTALL_PATH = /usr/local/bin
+
 EXEC = $(BIN)/$(PNAME)
+
 INCFLAGS  = -Isrc/
 
 CCFLAGS += $(INCFLAGS)
-
+CCFLAGS += -ggdb
 
 LDFLAGS  = $(INCFLAGS)
 # LDFLAGS += -lstdc++
@@ -20,13 +23,17 @@ LDFLAGS  = $(INCFLAGS)
 all: build
 
 run: build
-	$(BIN)/c $*
+	$(BIN)/cnum $*
 
 build: $(OBJ)
-	$(CC) -ggdb -o $(BIN)/c $(filter %.o,$^) $(LDFLAGS)
+	$(CC) -o $(BIN)/cnum $(filter %.o,$^) $(LDFLAGS)
+
+install: build
+	cp $(BIN)/$(PNAME) $(INSTALL_PATH)
 
 clean:
 	rm $(BIN)/* $(OBJ)
 
 %.o: %.c
-	$(CC) -ggdb -o $@ -c $< $(CCFLAGS)
+	$(CC) -o $@ -c $< $(CCFLAGS)
+
