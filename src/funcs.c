@@ -3,89 +3,106 @@
 #include <stdio.h>
 #include <limits.h>
 #include <string.h>
+#include <math.h>
 
 #define CONF_SZ 2
 bool configs[CONF_SZ] = {
-		false, // grid print
+		true, // grid print
 		false
 };
-
+// 0-8: arg
 const CmdFn cmdFns[CMD_SZ] = {
-		inc, dcr,
 		shl, shr,
+		divid, mod,
 		new, new,
-		add, rem,
+		add, rem, rem,
+		inc, dcr,
 		print, print, print, print,
 		conf,
 		dec, hex, bin, oct,
-		rnd, rnd, rnd, rnd
+		rnd, rnd, rnd, rnd,
+		half,
 };
 const char *commands[CMD_SZ] = {
-		"inc", "dcr",	// increment, decrement
-		"shl", "shr",	// shift left/right
-		"set", "new",	// sets current number
-		"add", "rem",	// add rem %n%
-		"prt", "p", "prnt", "print", // print
+		"shl", "shr", 			// shift left/right
+		"div", "mod", 			// divide, modulo
+		"set", "new", 			// sets current number
+		"add", "rem", "sub",		// add rem %n%
+		"inc", "dcr",			// increment, decrement
+		"prt", "p", "prnt", "print", 	// print
 		"conf",
 		"dec", "hex", "bin", "oct",
-		"rand", "r", "rnd", "random"
-};
-const bool takesArg[CMD_SZ] = {
-		false, false,	// inc dec
-		true,  true,	// shl shr
-		true,  true,	// set new
-		true,  true,	// add rem
-		false, false, false, false, // print
-		false,
-		false, false, false, false
+		"rand", "r", "rnd", "random",
+		"half"
+
 };
 const unsigned char CountingSys[4] = {
 		10, 16, 2, 8
 };
+const char *restrict const zeros_ml[] = {
+	"000", "00",
+	"00000000",
+	"0000"
+};
+const char *restrict const zeros_ol[] = {
+	"000000000000",
+	"00000000",
+	"00000000 00000000 00000000 00000000",
+	"0000000000000000"
+};
 
 extern bool isDebug;
 enum PrintEnum lastmode = P_DEC;
+// simple relative command
+#define DEFINE_SRCMD(NAME, OP) 			\
+	void NAME(unsigned *n, int arg) { 	\
+		*n = *n OP; 			\
+	}
+// simple command
+#define DEFINE_SCMD(NAME, OP) 			\
+	void NAME(unsigned *n, int arg) { 	\
+		*n = OP; 			\
+	}
 
-void inc(unsigned *n, int arg) { *n = *n + 1; }
-void dcr(unsigned *n, int arg) { *n = *n - 1; }
-void shl(unsigned *n, int arg) { *n = *n << arg; }
-void shr(unsigned *n, int arg) { *n = *n >> arg; }
-void new(unsigned *n, int arg) { *n = arg; }
-void add(unsigned *n, int arg) { *n += arg; }
-void rem(unsigned *n, int arg) { *n -= arg; }
+DEFINE_SRCMD(inc, +1);
+DEFINE_SRCMD(dcr, -1);
+DEFINE_SRCMD(shl, << arg);
+DEFINE_SRCMD(shr, >> arg);
+DEFINE_SRCMD(divid, / arg);
+DEFINE_SRCMD(mod, % arg);
+
+DEFINE_SCMD(new, (unsigned)arg);
+
+DEFINE_SRCMD(add, +arg);
+DEFINE_SRCMD(rem, -arg);
+DEFINE_SRCMD(half, / 2);
+
 #include <stdlib.h>
+DEFINE_SCMD(rnd, rand() % UINT_MAX);
+
 void print(unsigned *n, int arg) {
 	if(configs[0]) { // Grid
-		char buff[9] = "00000000\0";
-		char  str[9] = "00000000\0";
+		char buff[9];
+		char  str[9];
 		unsigned char *ptr = (unsigned char *) n;
+		strcpy(str, zeros_ml[arg]);
+		strcpy(buff, zeros_ml[arg]);
 
 		for (int i = 0; i < sizeof(*n); i++) {
 			switch (arg) {
 				case P_DEC:
-					strcpy(str, "000");
-					strcpy(buff, "000");
-					//size = 3; // 255
 					DEC(*ptr, buff);
 					break;
 				case P_HEX:
-					//strcpy(foo, "  ");
-					strcpy(str, "00");
-					strcpy(buff, "00");
-					//size = 2; // ff
 					HEX(*ptr, buff);
 					break;
+				default:
 				case P_BIN: // default
-					//size = 8; // 11111111
 					BIN(*ptr, buff);
 					break;
 				case P_OCT:
-					strcpy(str, "0000");
-					strcpy(buff, "0000");
-					//size = 4; // 1103
 					OCT(*ptr, buff);
 					break;
-				default:;
 			}
 			strcpy(str + strlen(str) - strlen(buff), buff);
 			if (isDebug) {
@@ -97,32 +114,22 @@ void print(unsigned *n, int arg) {
 			ptr++;
 		}
 	} else { // one line
-		char buff[36] = "00000000 00000000 00000000 00000000\0";
-		char  str[36] = "00000000 00000000 00000000 00000000\0";
+		char buff[36];
+		char  str[36];
+		strcpy(str, zeros_ol[arg]);
+		strcpy(buff, zeros_ol[arg]);
 		switch (arg) {
 			case P_DEC:
 dec:
-				strcpy(str, "000000000000");
-				strcpy(buff, "000000000000");
-				//size = 3; // 255
 				DEC(*n, buff);
 				break;
 			case P_HEX:
-				//strcpy(foo, "  ");
-				strcpy(str, "00000000");
-				strcpy(buff, "00000000");
-				//size = 2; // ff
-
 				HEX(*n, buff);
 				break;
 			case P_BIN: // default
-				//size = 8; // 11111111
 				BIN(*n, buff);
 				break;
 			case P_OCT:
-				strcpy(str, "0000000000000000");
-				strcpy(buff, "0000000000000000");
-				//size = 4; // 1103
 				OCT(*n, buff);
 				break;
 			default:
@@ -152,6 +159,4 @@ void dec(unsigned *n, int arg) { print(n, P_DEC); }
 void hex(unsigned *n, int arg) { print(n, P_HEX); }
 void bin(unsigned *n, int arg) { print(n, P_BIN); }
 void oct(unsigned *n, int arg) { print(n, P_OCT); }
-
-void rnd(unsigned int *n, int arg) { *n = rand() % UINT_MAX; }
 

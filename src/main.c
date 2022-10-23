@@ -47,7 +47,7 @@ inchk:
 				printf("Checking: %s\n", commands[i]);
 			if(strncasecmp(commands[i], cmd, 7) == 0) {
 				found = true;
-				if (takesArg[i]) {
+				if (i < 9) {
 arg:
 					printf("Arg: ");
 					char strarg[16];

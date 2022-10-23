@@ -14,6 +14,8 @@ INCFLAGS  = -Isrc/
 
 CCFLAGS += $(INCFLAGS)
 CCFLAGS += -ggdb
+CCFLAGS += -O0
+CCFLAGS += -Wall
 
 LDFLAGS  = $(INCFLAGS)
 # LDFLAGS += -lstdc++

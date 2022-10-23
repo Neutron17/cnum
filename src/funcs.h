@@ -3,12 +3,15 @@
 
 #include <stdbool.h>
 
-#define CMD_SZ 21
+#define CMD_SZ 25
 
 void inc(unsigned *n, int arg);
 void dcr(unsigned *n, int arg);
 void shl(unsigned *n, int arg);
 void shr(unsigned *n, int arg);
+void divid(unsigned *n, int arg);
+void mod(unsigned *n, int arg);
+
 void new(unsigned *n, int arg);
 void add(unsigned *n, int arg);
 void rem(unsigned *n, int arg);
@@ -21,12 +24,14 @@ void bin(unsigned *n, int arg);
 void oct(unsigned *n, int arg);
 
 void rnd(unsigned *n, int arg);
+void half(unsigned *n, int arg);
+
 
 typedef void (*CmdFn)(unsigned*, int);
 const extern CmdFn cmdFns[CMD_SZ];
 
 const extern char *commands[CMD_SZ];
-const extern bool takesArg[CMD_SZ];
+//const extern bool takesArg[CMD_SZ];
 
 enum CmdEnum {
 	E_INC, E_DCR,
